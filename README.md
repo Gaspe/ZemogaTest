@@ -30,3 +30,5 @@ In this project were used 4 third-party libraries
 
 - Gson and Gson Converter: This is the official library released by Google to handle Json files and responses and, as it was stated before, works perfectly with Retrofit 2, making the process of binding the response data to the models very straightforward. 
 
+Note: In order to keep consistency, I used TinyDB class. This is an implementation of Android SharedPreferences that provides simpler methods to save and retrieve data. 
+
