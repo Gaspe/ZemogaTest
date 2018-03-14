@@ -25,12 +25,19 @@ import android.widget.Toast;
 
 import com.example.zemogatest.ListStaticClass;
 import com.example.zemogatest.TinyDB;
+import com.example.zemogatest.models.CallbackEvent;
 import com.example.zemogatest.models.Post;
 import com.example.zemogatest.R;
 import com.example.zemogatest.RecyclerItemTouchHelper;
 import com.example.zemogatest.adapters.PostAdapter;
+import com.example.zemogatest.models.PostCallbackEvent;
 import com.example.zemogatest.requestImpl.ApiClient;
 import com.example.zemogatest.requestImpl.ApiInterface;
+import com.example.zemogatest.requestImpl.PostApi;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 
@@ -153,40 +160,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
 
     public void loadNextDataFromApi(final int offset, final boolean isRefresh) {
 
-        call = apiService.getPosts();
-
-        if(!isRefresh)
-            bar.setVisibility(View.VISIBLE);
-
-        call.enqueue(new Callback<ArrayList<Post>>() {
-            @Override
-            public void onResponse(@NonNull Call<ArrayList<Post>> call, @NonNull Response<ArrayList<Post>> response) {
-                postList.clear();
-                postList.addAll(response.body());
-                ArrayList<Post> posts = new ArrayList<>();
-                posts.addAll(response.body());
-                ListStaticClass.getInstance().setData(posts);
-
-                if (adapter != null) {
-                    if (!isRefresh)
-                        adapter.notifyItemRangeChanged(0, postList.size() - 1);
-                    else {
-                        adapter.notifyDataSetChanged();
-                    }
-
-                } else {
-                    initializeAdapter(postList);
-                    rv.setAdapter(adapter);
-                    bar.setVisibility(View.GONE);
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ArrayList<Post>> call, @NonNull Throwable t) {
-
-                Toast.makeText(ListActivity.this, "Unable to retrieve the posts", Toast.LENGTH_SHORT).show();
-            }
-        });
+        PostApi.getPosts();
     }
 
     public void initializeAdapter(ArrayList<Post> arrayList)
@@ -198,7 +172,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
                 in.putExtra("position", pos);
                 in.putExtra("userId", item.getUserId());
                 adapter.data.get(pos).setPending(false);
-                adapter.notifyDataSetChanged();
+                adapter.notifyItemChanged(pos);
                 startActivity(in);
 
             }
@@ -215,9 +189,11 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
     protected void onStart() {
         super.onStart();
 
-        ArrayList<Object> dbObjects = tinydb.getListObject("posts", Post.class);
-        if(dbObjects != null && !dbObjects.isEmpty()) {
+        EventBus.getDefault().register(this);
 
+        ArrayList<Object> dbObjects = tinydb.getListObject("posts", Post.class);
+        postList.clear();
+        if(dbObjects != null && !dbObjects.isEmpty()) {
             for(Object objs : dbObjects){
                 postList.add((Post)objs);
             }
@@ -230,15 +206,44 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
         }
     }
 
+    @Subscribe
+    public void onMessageEvent(PostCallbackEvent event)
+    {
+        if(event.isError())
+            Toast.makeText(ListActivity.this, "Unable to retrieve the posts", Toast.LENGTH_SHORT).show();
+        else
+        {
+            if(event.getType() == 0) {
+                postList.clear();
+                postList.addAll(event.getPosts());
+                ArrayList<Post> posts = new ArrayList<>();
+                posts.addAll(event.getPosts());
+                ListStaticClass.getInstance().setData(posts);
+
+                if (adapter != null) {
+                    adapter.notifyItemRangeChanged(0, postList.size() - 1);
+
+                } else {
+                    initializeAdapter(postList);
+                    rv.setAdapter(adapter);
+                    bar.setVisibility(View.GONE);
+                }
+            }
+        }
+    }
+
     @Override
     protected void onStop()
     {
         super.onStop();
+
         ArrayList<Object> dbObjects = new ArrayList<>();
 
         for(Post a : ListStaticClass.getInstance().getData()){
             dbObjects.add(a);
         }
         tinydb.putListObject("posts", dbObjects);
+
+        EventBus.getDefault().unregister(this);
     }
 }
