@@ -9,6 +9,7 @@ public class ListStaticClass {
 
     private static ListStaticClass sSoleInstance;
     private static ArrayList<Post> data;
+    private static Boolean isUpdated;
 
     private ListStaticClass(){}  //private constructor.
 
@@ -16,9 +17,18 @@ public class ListStaticClass {
         if (sSoleInstance == null){ //if there is no instance available... create new one
             sSoleInstance = new ListStaticClass();
             data = new ArrayList<>();
+            isUpdated = false;
         }
 
         return sSoleInstance;
+    }
+
+    public Boolean getIsUpdated() {
+        return isUpdated;
+    }
+
+    public void setIsUpdated(Boolean isUpdated) {
+        ListStaticClass.isUpdated = isUpdated;
     }
 
     public ArrayList<Post> getData() {
@@ -32,4 +42,5 @@ public class ListStaticClass {
     public void deleteData() {
         data.clear();
     }
+
 }

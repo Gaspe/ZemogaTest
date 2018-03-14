@@ -15,6 +15,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.StaticLayout;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,15 +48,12 @@ import retrofit2.Response;
 
 public class ListActivity extends AppCompatActivity implements RecyclerItemTouchHelper.RecyclerItemTouchHelperListener{
 
-    private static final String LIST_STATE_KEY = "list_key";
     ApiInterface apiService;
     ArrayList<Post> postList;
-    Call<ArrayList<Post>> call;
     PostAdapter adapter;
     ProgressBar bar;
     RecyclerView rv;
     RadioButton all;
-    private Parcelable mListState;
     private LinearLayoutManager mLayoutManager;
     TinyDB tinydb;
 
@@ -149,16 +147,15 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
 
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
 
-            loadNextDataFromApi(1,true);
+            loadNextDataFromApi();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void loadNextDataFromApi(final int offset, final boolean isRefresh) {
+    public void loadNextDataFromApi() {
 
         PostApi.getPosts();
     }
@@ -191,19 +188,38 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
 
         EventBus.getDefault().register(this);
 
-        ArrayList<Object> dbObjects = tinydb.getListObject("posts", Post.class);
-        postList.clear();
-        if(dbObjects != null && !dbObjects.isEmpty()) {
-            for(Object objs : dbObjects){
-                postList.add((Post)objs);
+        if(!ListStaticClass.getInstance().getIsUpdated())
+        {
+            ArrayList<Object> dbObjects = tinydb.getListObject("posts", Post.class);
+
+            if (dbObjects != null && !dbObjects.isEmpty()) {
+                postList.clear();
+                for (Object objs : dbObjects) {
+                    postList.add((Post) objs);
+                }
+                ListStaticClass.getInstance().setData(postList);
+                initializeAdapter(postList);
+                rv.setAdapter(adapter);
+            } else {
+                loadNextDataFromApi();
             }
-            ListStaticClass.getInstance().setData(postList);
-            initializeAdapter(postList);
-            rv.setAdapter(adapter);
         }
         else {
-            loadNextDataFromApi(1, false);
+            if(adapter!=null)
+                adapter.notifyDataSetChanged();
+            else
+                loadNextDataFromApi();
         }
+
+        ListStaticClass.getInstance().setIsUpdated(false);
+
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d("TAG", "I'm here");
     }
 
     @Subscribe

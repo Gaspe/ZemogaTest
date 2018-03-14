@@ -87,6 +87,7 @@ public class DetailActivity extends AppCompatActivity {
                     text = "Post added to favorites!";
                 }
 
+                staticClass.setIsUpdated(true);
                 setIcon();
 
                 Snackbar.make(view, text , Snackbar.LENGTH_SHORT)
@@ -146,8 +147,6 @@ public class DetailActivity extends AppCompatActivity {
                 "Name: " + currentUser.getCompany().getName() + "\n\t" +
                 "CatchPhrase: " + currentUser.getCompany().getCatchPhrase() + "\n\t" +
                 "Bs: " + currentUser.getCompany().getBs();
-
-
 
         AlertDialog.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
