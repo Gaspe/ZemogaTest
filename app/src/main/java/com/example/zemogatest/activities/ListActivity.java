@@ -194,6 +194,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
 
             if (dbObjects != null && !dbObjects.isEmpty()) {
                 postList.clear();
+
                 for (Object objs : dbObjects) {
                     postList.add((Post) objs);
                 }
