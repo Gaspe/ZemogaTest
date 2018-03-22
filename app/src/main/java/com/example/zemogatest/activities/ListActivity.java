@@ -170,7 +170,7 @@ public class ListActivity extends AppCompatActivity implements RecyclerItemTouch
                 in.putExtra("userId", item.getUserId());
                 adapter.data.get(pos).setPending(false);
                 adapter.notifyItemChanged(pos);
-                startActivity(in);
+                startActivity(in);;
 
             }
         });
